@@ -5,6 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import cl.fernando.individual1_m6.databinding.FragmentAddBinding
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 
 // TODO: Rename parameter arguments, choose names that match
@@ -18,44 +21,49 @@ private const val ARG_PARAM2 = "param2"
  * create an instance of this fragment.
  */
 
-class AgregarFragment: Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+class AddFragment: Fragment() {
+    lateinit var  binding : FragmentAddBinding
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
+
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        binding = FragmentAddBinding.inflate(layoutInflater,container,false)
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_agregar, container, false)
+
+        initListener()
+        loadTasks()
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AgregarFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            AgregarFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    private fun initListener() {
+        binding.btnAgregarTarea.setOnClickListener{
+            val text =  binding.edTarea.text.toString()
+            guardarTarea(text)
+        }
     }
+
+    private fun guardarTarea(texto:String) {
+        val dao = TareaBaseDatos.getDatabase(requireContext()).getTaskDao()
+        val task = Tarea(texto)
+        GlobalScope.launch { dao.insertarTarea(task) }
+
+    }
+    private fun loadTasks(){
+        val dao = TareaBaseDatos.getDatabase(requireContext()).getTaskDao()
+        GlobalScope.launch {
+            val tasks = dao.getTareas()
+            val tasksAsText = tasks.joinToString("\n") { it.nombre }
+
+            binding.textView.text = tasksAsText
+        }
+
+    }
+
 }

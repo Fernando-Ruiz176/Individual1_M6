@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import cl.fernando.individual1_m6.databinding.FragmentAddBinding
 import kotlinx.coroutines.GlobalScope
@@ -23,7 +24,7 @@ private const val ARG_PARAM2 = "param2"
 
 class AddFragment: Fragment() {
     lateinit var  binding : FragmentAddBinding
-
+    lateinit var repositorio: Repositorio
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,33 +37,36 @@ class AddFragment: Fragment() {
     ): View? {
         binding = FragmentAddBinding.inflate(layoutInflater,container,false)
         // Inflate the layout for this fragment
-
+        initRepositorio()
         initListener()
         loadTasks()
         return binding.root
     }
 
+    private fun initRepositorio(){
+        repositorio = Repositorio(TareaBaseDatos.getDatabase(requireContext()).getTaskDao())
+    }
+
     private fun initListener() {
         binding.btnAgregarTarea.setOnClickListener{
             val text =  binding.edTarea.text.toString()
-            guardarTarea(text)
+            guardarTexto(text)
+            binding.edTarea.setText("")
+            Toast.makeText(requireContext(), "Se a agregado un texto", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun guardarTarea(texto:String) {
-        val dao = TareaBaseDatos.getDatabase(requireContext()).getTaskDao()
+    private fun guardarTexto(texto:String) {
         val task = Tarea(texto)
-        GlobalScope.launch { dao.insertarTarea(task) }
+        GlobalScope.launch { repositorio.insertTask(task) }
 
     }
     private fun loadTasks(){
-        val dao = TareaBaseDatos.getDatabase(requireContext()).getTaskDao()
-        GlobalScope.launch {
-            val tasks = dao.getTareas()
-            val tasksAsText = tasks.joinToString("\n") { it.nombre }
-
+        val tasks = repositorio.getTareas().observe(requireActivity()){
+            val tasksAsText = it.joinToString("\n") { it.nombre }
             binding.textView.text = tasksAsText
         }
+
 
     }
 

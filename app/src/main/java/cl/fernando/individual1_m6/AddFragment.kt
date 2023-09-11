@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import cl.fernando.individual1_m6.databinding.FragmentAddBinding
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -24,7 +25,7 @@ private const val ARG_PARAM2 = "param2"
 
 class AddFragment: Fragment() {
     lateinit var  binding : FragmentAddBinding
-    lateinit var repositorio: Repositorio
+    private val tareaViewModel: TareaViewModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,15 +38,11 @@ class AddFragment: Fragment() {
     ): View? {
         binding = FragmentAddBinding.inflate(layoutInflater,container,false)
         // Inflate the layout for this fragment
-        initRepositorio()
         initListener()
         loadTasks()
         return binding.root
     }
 
-    private fun initRepositorio(){
-        repositorio = Repositorio(TareaBaseDatos.getDatabase(requireContext()).getTaskDao())
-    }
 
     private fun initListener() {
         binding.btnAgregarTarea.setOnClickListener{
@@ -58,11 +55,11 @@ class AddFragment: Fragment() {
 
     private fun guardarTexto(texto:String) {
         val task = Tarea(texto)
-        GlobalScope.launch { repositorio.insertTask(task) }
+        tareaViewModel.insertarTarea(task)
 
     }
     private fun loadTasks(){
-        val tasks = repositorio.getTareas().observe(requireActivity()){
+         tareaViewModel.obtenerTareas().observe(viewLifecycleOwner){
             val tasksAsText = it.joinToString("\n") { it.nombre }
             binding.textView.text = tasksAsText
         }
